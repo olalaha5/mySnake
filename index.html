@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ilyhaSnake</title>
+</head>
+
+
+<body>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden
+        }
+
+        #canvas {
+            display: block
+        }
+
+        #buttonResetSnake {
+            display: none;
+            position: relative;
+            height: 20px;
+            background: #fff;
+            border: 1px solid;
+            border-radius: 5px;
+            outline: none;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+    <a id='canvasHrefSnake' href='#canvas'>123</a>
+    <canvas name='canvas12' id="canvas"></canvas>
+    <button id='buttonResetSnake'>Новая игра</button>
+    <script>
+        document.querySelector('#buttonResetSnake').onclick = () => window.location.reload();
+        let aq = document.querySelector('#canvasHrefSnake');
+        let canvas = document.querySelector('canvas');
+        console.log(canvas);
+        let ctx = canvas.getContext('2d');
+        let a = Math.min(window.innerWidth, window.innerHeight);
+        canvas.width = a;
+        canvas.height = a;
+        let snX = [parseFloat((a * 20 / 41).toFixed(8)), parseFloat((a * 20 / 41).toFixed(8)), parseFloat((a * 20 / 41).toFixed(8)), parseFloat((a * 20 / 41).toFixed(8))];
+        let snY = [parseFloat((a * 20 / 41).toFixed(8)), parseFloat((a * 21 / 41).toFixed(8)), parseFloat((a * 22 / 41).toFixed(8)), parseFloat((a * 23 / 41).toFixed(8))];
+        let apple = [0, 0]
+        let touchS = [0, 0]
+        let touchE = [0, 0]
+        let n = 0;
+        let w = 0;
+        let s = 0;
+        //защита от двойного нажатия(при этом змейка поворачивает в себя)
+        let p = false
+        //определение клавиш
+        document.onkeypress = (e) => {
+            if (e.code === 'KeyW' && p === false) {
+                if (n !== 2) { n = 0 }
+            } else if (e.code === 'KeyS' && p === false) {
+                if (n !== 0) { n = 2 }
+            } else if (e.code === 'KeyA' && p === false) {
+                if (n !== 1) { n = 3 }
+            } else if (e.code === 'KeyD' && p === false) {
+                if (n !== 3) { n = 1 }
+            };
+            //защита от двойного нажатия(при этом змейка поворачивает в себя)
+            p = true;
+        };
+
+
+        //определение касаний
+        canvas.addEventListener('touchstart', tch);
+        function tch(event) {
+            touchS[0] = event.changedTouches[0].clientX;
+            touchS[1] = event.changedTouches[0].clientY;
+        };
+        canvas.addEventListener('touchend', tch1);
+        function tch1(event) {
+            touchE[0] = event.changedTouches[0].clientX;
+            touchE[1] = event.changedTouches[0].clientY;
+            if (touchS[1] - touchE[1] > 10 && (n == 3 || n == 1) && p === false && n !== 2) { n = 0 }
+            else if (touchS[0] - touchE[0] < -10 && (n == 2 || n == 0) && p === false && n !== 3) { n = 1 }
+            else if (touchS[1] - touchE[1] < -10 && (n == 3 || n == 1) && p === false && n !== 0) { n = 2 }
+            else if (touchS[0] - touchE[0] > 10 && (n == 2 || n == 0) && p === false && n !== 1) { n = 3 }
+            p = true;
+        };
+        //рандомные координаты яблока
+        function Apple() {
+            let x = Math.floor(Math.random() * 41);
+            let y = Math.floor(Math.random() * 41);
+            ctx.fillStyle = '#f00';
+            apple[0] = a * x / 41;
+            apple[1] = a * y / 41;
+            ctx.fillRect(a * x / 41, a * y / 41, a / 41, a / 41);
+        };
+        Apple();
+
+
+
+        function run() {
+            //движение тела
+            for (let i = snX.length; i > 1; i--) {
+                snX[i - 1] = snX[i - 2];
+                snY[i - 1] = snY[i - 2];
+            };
+            //движение головы
+            if (n === 0) {
+                snY[0] = parseFloat((snY[0] - a / 41).toFixed(8));
+            } else if (n === 1) {
+                snX[0] = parseFloat((snX[0] + a / 41).toFixed(8));
+            } else if (n === 2) {
+                snY[0] = parseFloat((snY[0] + a / 41).toFixed(8));
+            } else if (n === 3) {
+                snX[0] = parseFloat((snX[0] - a / 41).toFixed(8));
+            };
+            //проверка на столкновение со стеной
+            if ((Math.max(snX[0] + a / 41 * 0.5, snY[0] + a / 41 * 0.5) > a) || (Math.min(snX[0] + a / 41 * 0.5, snY[0] + a / 41 * 0.5) < 0)) {
+                return 1;
+            };
+            //проверка на столкновение с телом
+            if (w == 1) { return 1 };
+            for (let i = 1; i < snX.length; i++) {
+                if ((snX[0] === snX[i] && snY[0] === snY[i]) || w === 1) {
+                    w = 1;
+                    return 1
+                };
+            };
+            //отрисовка
+            ctx.fillStyle = '#111';
+            ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+            ctx.fillStyle = '#f00';
+            ctx.fillRect(apple[0], apple[1], a / 41 * 0.95, a / 41 * 0.95);
+            ctx.fillStyle = '#55BE53';
+            for (let i = 0; i < snX.length; i++) {
+                ctx.fillRect(snX[i], snY[i], a / 41 * 0.95, a / 41 * 0.95);
+            };
+            //проверка на столкновение с яблоком
+            if (Math.abs(snX[0].toFixed(0)) == apple[0].toFixed(0) && Math.abs(snY[0].toFixed(0)) == apple[1].toFixed(0)) {
+                Apple();
+                snX.push('');
+                snY.push('');
+            };
+            //защита от двойного нажатия(при этом змейка поворачивает в себя)
+            p = false;
+        };
+        run();
+        function pause() {
+            if (run() == 1) {
+                let but = document.querySelector('#buttonResetSnake');
+                but.style.display = 'block';
+                but.style.height = `${a / 41 * 2}px`;
+                but.style.width = `${a / 41 * 7}px`;
+                but.style.fontSize = `${a / 41}px`;
+                but.style.bottom = `${(canvas.height + a / 21 * 2) / 2}px`;
+                but.style.left = `${(canvas.width - a / 41 * 7) / 2}px`;
+                console.log(12);
+            };
+        };
+        setInterval(pause, 250);
+    </script>
+</body>
+
+</html>
